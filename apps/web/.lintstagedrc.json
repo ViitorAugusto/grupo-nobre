@@ -1,0 +1,6 @@
+{
+  "*": "secretlint --maskSecrets --secretlintrc ../../.secretlintrc.json --secretlintignore ../../.secretlintignore",
+  "*.{ts,tsx,mts,js,mjs,json,css}": "prettier --write --ignore-unknown",
+  "*.{ts,tsx,mts,mjs}": "eslint --fix --max-warnings=0",
+  "src/**/*.{ts,tsx}": "node ../../scripts/check-design-tokens.mjs"
+}
