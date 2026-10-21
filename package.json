@@ -1,0 +1,42 @@
+{
+  "name": "crm-nobre",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CRM interno da Nobre Brindes: funil de oportunidades, Kanban e Fila de retorno do dia",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "setup": "node scripts/setup-env.mjs",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:deploy -w api",
+    "db:seed": "npm run db:seed -w api",
+    "db:reset": "npm run db:reset -w api",
+    "dev": "concurrently -n api,web -c yellow,cyan \"npm run start:dev -w api\" \"npm run dev -w web\"",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces",
+    "test:e2e": "npm run test:e2e -w api",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "secrets:check": "secretlint \"**/*\"",
+    "demo": "npm run db:up && npm run db:migrate && npm run db:seed && npm run dev"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
+    "concurrently": "^10.0.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.4.2",
+    "secretlint": "^13.0.7"
+  }
+}

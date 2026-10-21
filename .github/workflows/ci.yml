@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Lint, tipos, testes unitários e build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Mensagens de commit (Conventional Commits)
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+      - name: Formatação
+        run: npm run format:check
+      - name: Segredos
+        run: npm run secrets:check
+      - name: Lint (inclui checagem de tokens do design system)
+        run: npm run lint
+      - name: Tipos
+        run: npm run typecheck
+      - name: Testes unitários
+        run: npm test
+      - name: Vulnerabilidades em dependências de produção
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build
+        run: npm run build
+
+  e2e:
+    name: Testes e2e da API (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: crm_ci
+          POSTGRES_DB: crm_nobre_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm -d crm_nobre_test"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      PGUSER: crm
+      PGPASSWORD: crm_ci
+      PGDATABASE: crm_nobre_test
+      REFERENCE_DATE: '2026-10-15'
+      CORS_ORIGIN: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Testes e2e
+        run: |
+          export DATABASE_URL_TEST="postgresql://$PGUSER:$PGPASSWORD@localhost:5432/$PGDATABASE?schema=public"
+          export DATABASE_URL="$DATABASE_URL_TEST"
+          npm run test:e2e

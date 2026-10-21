@@ -1,0 +1,41 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Testes
+coverage/
+
+# Ambiente: só o arquivo de exemplo vai para o repositório
+.env
+.env.*
+!.env.example
+
+# Credenciais
+*.pem
+*.key
+
+# Agentes do Maestri (papéis locais, fora do repositório)
+.maestri/
+# Configuração local do Claude Code
+.claude/settings.local.json
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cliente Prisma gerado (o npm install regenera)
+apps/api/src/generated/

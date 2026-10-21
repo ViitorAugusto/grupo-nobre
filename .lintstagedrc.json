@@ -1,0 +1,4 @@
+{
+  "*": "secretlint --maskSecrets",
+  "*.{ts,tsx,mts,js,mjs,cjs,json,css,yml,yaml}": "prettier --write --ignore-unknown"
+}
