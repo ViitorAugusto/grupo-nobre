@@ -1,0 +1,5 @@
+{
+  "*": "secretlint --maskSecrets --secretlintrc ../../.secretlintrc.json --secretlintignore ../../.secretlintignore",
+  "*.{ts,mts,js,mjs,json}": "prettier --write --ignore-unknown",
+  "*.ts": "oxlint --type-aware --fix"
+}

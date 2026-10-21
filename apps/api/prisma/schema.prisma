@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Stage {
+  PRIMEIRO_CONTATO
+  APRESENTACAO_ORCAMENTO
+  FOLLOW_UP
+  FORECAST
+  FECHAMENTO
+  PERDIDA
+}
+
+enum LossReason {
+  PRECO
+  PRAZO
+  CONCORRENCIA
+  CLIENTE_DESISTIU
+  SEM_RESPOSTA
+  OUTRO
+  NAO_REGISTRADO
+}
+
+model Seller {
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String            @unique @db.VarChar(120)
+  opportunities     Opportunity[]
+  followUpItems     FollowUpRunItem[]
+  followUpSummaries FollowUpSummary[]
+
+  @@map("sellers")
+}
+
+model Opportunity {
+  id                 String            @id @default(uuid()) @db.Uuid
+  code               String            @unique @db.VarChar(20)
+  company            String            @db.VarChar(200)
+  sellerId           String            @map("seller_id") @db.Uuid
+  seller             Seller            @relation(fields: [sellerId], references: [id])
+  stage              Stage
+  estimatedValue     Decimal?          @map("estimated_value") @db.Decimal(12, 2)
+  lastContactDate    DateTime?         @map("last_contact_date") @db.Date
+  proposalValidUntil DateTime?         @map("proposal_valid_until") @db.Date
+  eventDate          DateTime?         @map("event_date") @db.Date
+  lossReason         LossReason?       @map("loss_reason")
+  lossReasonText     String?           @map("loss_reason_text") @db.VarChar(500)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  items              OpportunityItem[]
+  history            StageHistory[]
+  followUpItems      FollowUpRunItem[]
+
+  @@index([sellerId])
+  @@index([stage])
+  @@map("opportunities")
+}
+
+model OpportunityItem {
+  id            String      @id @default(uuid()) @db.Uuid
+  opportunityId String      @map("opportunity_id") @db.Uuid
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  product       String      @db.VarChar(120)
+  quantity      Int
+  position      Int
+
+  @@index([opportunityId])
+  @@map("opportunity_items")
+}
+
+model StageHistory {
+  id             String      @id @default(uuid()) @db.Uuid
+  opportunityId  String      @map("opportunity_id") @db.Uuid
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  fromStage      Stage       @map("from_stage")
+  toStage        Stage       @map("to_stage")
+  lossReason     LossReason? @map("loss_reason")
+  lossReasonText String?     @map("loss_reason_text") @db.VarChar(500)
+  changedAt      DateTime    @default(now()) @map("changed_at") @db.Timestamptz(3)
+
+  @@index([opportunityId, changedAt])
+  @@map("stage_history")
+}
+
+model FollowUpRun {
+  id          String            @id @default(uuid()) @db.Uuid
+  date        DateTime          @unique @db.Date
+  generatedAt DateTime          @default(now()) @map("generated_at") @db.Timestamptz(3)
+  items       FollowUpRunItem[]
+  summaries   FollowUpSummary[]
+
+  @@map("follow_up_runs")
+}
+
+model FollowUpRunItem {
+  id            String      @id @default(uuid()) @db.Uuid
+  runId         String      @map("run_id") @db.Uuid
+  run           FollowUpRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  opportunityId String      @map("opportunity_id") @db.Uuid
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  sellerId      String      @map("seller_id") @db.Uuid
+  seller        Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  position      Int
+
+  @@unique([runId, opportunityId])
+  @@index([runId, sellerId])
+  @@map("follow_up_run_items")
+}
+
+model FollowUpSummary {
+  id        String      @id @default(uuid()) @db.Uuid
+  runId     String      @map("run_id") @db.Uuid
+  run       FollowUpRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  sellerId  String      @map("seller_id") @db.Uuid
+  seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([runId, sellerId])
+  @@map("follow_up_summaries")
+}
